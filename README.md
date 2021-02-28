@@ -1,1 +1,4 @@
-# bombar-shell
+# Introduction
+This report covers the explanation of project 1. Firstly, the system is designed with a prop that requests an input from the user as seen in figure 1. There are 3 execution methods for processes. First takes a command name and its arguments. Then it parses the names into tokens and trims down the unnecessary whitespaces. Then a child process is created for execution. If debug mode is enabled it also shows the gathered input and statistics about the execution. Other execution methods work the same, two child processes are created and executed asynchronously. However, in the second one the execution happens in normal mode. And in the third execution happens in the tapped mode. Second argument determines this mode of execution as written in the assignment.
+
+![alt text](https://raw.githubusercontent.com/ubombar/bombar-shell/main/title.png)
