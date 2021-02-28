@@ -11,7 +11,7 @@
 int main(int argc, char const *argv[])
 {
     // initialize random
-    srand(time(NULL));
+    srand(time(NULL));    
 
     int m = 1;
     // check for arguments

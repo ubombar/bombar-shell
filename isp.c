@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #define CMD_BUFFER 256
 #define NUM_BUFFERS 32
@@ -19,6 +20,13 @@ typedef struct
     char* name;
     int len;
 } token;
+
+typedef struct 
+{
+    int total_char;
+    int total_read_call;
+    int total_write_call;
+} pipe_statistics;
 
 void fill(char* _str, char c, int len) 
 {
@@ -104,17 +112,18 @@ int main(int argc, char const *argv[])
 {
     // debug mode print insigts
     int debug_mode = 1; // set this 0 to disable debug
+
+    char* l1 = "     ____                  _                   _____ _          _ _ ";
+    char* l2 = "    |  _ \\                | |                 / ____| |        | | |";
+    char* l3 = "    | |_) | ___  _ __ ___ | |__   __ _ _ __  | (___ | |__   ___| | |";
+    char* l4 = "    |  _ < / _ \\| '_ ` _ \\| '_ \\ / _` | '__|  \\___ \\| '_ \\ / _ \\ | |";
+    char* l5 = "    | |_) | (_) | | | | | | |_) | (_| | |     ____) | | | |  __/ | |";
+    char* l6 = "    |____/ \\___/|_| |_| |_|_.__/ \\__,_|_|    |_____/|_| |_|\\___|_|_|";
+                                                                
+    printf("%s\n%s\n%s\n%s\n%s\n%s\n\n", l1, l2, l3, l4, l5, l6);
     
     if (debug_mode)
     {
-        char* l1 = "     ____                  _                   _____ _          _ _ ";
-        char* l2 = "    |  _ \\                | |                 / ____| |        | | |";
-        char* l3 = "    | |_) | ___  _ __ ___ | |__   __ _ _ __  | (___ | |__   ___| | |";
-        char* l4 = "    |  _ < / _ \\| '_ ` _ \\| '_ \\ / _` | '__|  \\___ \\| '_ \\ / _ \\ | |";
-        char* l5 = "    | |_) | (_) | | | | | | |_) | (_| | |     ____) | | | |  __/ | |";
-        char* l6 = "    |____/ \\___/|_| |_| |_|_.__/ \\__,_|_|    |_____/|_| |_|\\___|_|_|";
-                                                                 
-        printf("%s\n%s\n%s\n%s\n%s\n%s\n\n", l1, l2, l3, l4, l5, l6);
         printf("!! Running on debug mode on, this will display the parsed input and time !!\n\n");
     }
 
@@ -124,7 +133,7 @@ int main(int argc, char const *argv[])
     token token_buffer[TOKEN_BUFFER];
 
     int no_bytes = 64; // expected positive
-    int mode = 2; // expected 1 (normal) or 2 (tapped)
+    int mode = 1; // expected 1 (normal) or 2 (tapped)
 
     // check for arguments
     if (argc < 3)
@@ -138,7 +147,7 @@ int main(int argc, char const *argv[])
         int _no_bytes = atoi(argv[1]); // expected positive
         int _mode = atoi(argv[2]); // expected 1 (normal) or 2 (tapped)
 
-        if (_mode != 1 || _mode != 2)
+        if (_mode != 1 && _mode != 2)
         {
             printf("    ! Mode can only be 1 (normal mode) or 2 (tapped mode) (continuing m=%d)\n\n", mode);
         }
@@ -197,6 +206,9 @@ int main(int argc, char const *argv[])
 
             args[no_tokens] = 0;
 
+            struct timeval begin_time;
+            gettimeofday(&begin_time, NULL);
+
             pid_t p = fork();
             
             // child's perspective
@@ -213,6 +225,21 @@ int main(int argc, char const *argv[])
             if (p != 0) 
             {
                 wait(NULL);
+
+                if (debug_mode)
+                {
+                    struct timeval end_time;
+                    gettimeofday(&end_time, NULL);
+
+                    long time_interval_usec = 1000000 * (end_time.tv_sec - begin_time.tv_sec) + (end_time.tv_sec - begin_time.tv_sec);
+                    long time_interval_sec = time_interval_usec / 1000;
+
+                    // printf(">   character-count  : %d\n", st.total_char);
+                    // printf(">   read-call-count  : %d\n", st.total_read_call);
+                    // printf(">   write-call-count : %d\n", st.total_write_call);
+                    printf(">   total-time-passed-ms: %ldms\n", time_interval_sec);
+                    // printf(">   total-time-passed-ms: %d\n", (int) ((end_time - begin_time) / CLOCKS_PER_SEC));
+                }
             }
         }
 
@@ -220,6 +247,8 @@ int main(int argc, char const *argv[])
         if (pipe_symbol != -1 && mode == 1)
         {
             int fd[2];
+            // int fd1[2];
+            // int fd2[2];
             // create arguments
             char* arg1[pipe_symbol + 1];
             char* arg2[no_tokens - pipe_symbol];
@@ -242,12 +271,19 @@ int main(int argc, char const *argv[])
 
             arg2[no_tokens - pipe_symbol - 1] = 0;
 
+            struct timeval begin_time;
+            gettimeofday(&begin_time, NULL);
+
             pipe(fd);
+            // pipe(fd1);
+            // pipe(fd2);
             pid_t p1 = fork();
             
             // Producer's perspective
             if (p1 == 0)
             {
+                int dup_std_out = dup(STDOUT_FILENO);
+
                 dup2(fd[WRITE], STDOUT_FILENO);
                 close(fd[READ]);
 
@@ -256,8 +292,32 @@ int main(int argc, char const *argv[])
                 {
                     printf("    ! Child 1 execution failed (exited with status code %d)\n", ret);
                 }
-                
+
                 close(fd[WRITE]);
+
+                if (debug_mode)
+                {
+
+                    int read_byte;
+                    char buffer[no_bytes];
+                    int total_char = 0;
+                    int total_read_call = 0;
+
+                    while (1)
+                    {
+                        read_byte = read(STDOUT_FILENO, buffer, no_bytes);
+
+                        if (read_byte <= 0)
+                            break;
+                        
+                        total_char += read_byte;
+                        total_read_call += 1;
+                    }
+
+                    printf(">   character-count : %d\n", total_char);
+                    printf(">   read-call-count : %d\n", total_read_call);
+                }
+
                 exit(0);
             }
 
@@ -293,6 +353,21 @@ int main(int argc, char const *argv[])
 
                 dup2(STDIN_FILENO, parent_std_inn);
                 dup2(STDOUT_FILENO, parent_std_out);
+
+                if (debug_mode)
+                {
+                    struct timeval end_time;
+                    gettimeofday(&end_time, NULL);
+
+                    long time_interval_usec = 1000000 * (end_time.tv_sec - begin_time.tv_sec) + (end_time.tv_sec - begin_time.tv_sec);
+                    long time_interval_sec = time_interval_usec / 1000;
+
+                    // printf(">   character-count  : %d\n", st.total_char);
+                    // printf(">   read-call-count  : %d\n", st.total_read_call);
+                    // printf(">   write-call-count : %d\n", st.total_write_call);
+                    printf(">   total-time-passed-ms: %ldms\n", time_interval_sec);
+                    // printf(">   total-time-passed-ms: %d\n", (int) ((end_time - begin_time) / CLOCKS_PER_SEC));
+                }
             }
         }
 
@@ -326,6 +401,9 @@ int main(int argc, char const *argv[])
 
             pipe(fd1);
             pipe(fd2);
+
+            struct timeval begin_time;
+            gettimeofday(&begin_time, NULL);
 
             pid_t p1 = fork();
             
@@ -379,11 +457,23 @@ int main(int argc, char const *argv[])
                 int parent_std_out = dup(STDOUT_FILENO);
 
                 char parent_buffer[no_bytes];
-                int read_bytes;
+                
+
+                pipe_statistics st = (pipe_statistics) {0, 0, 0};
 
                 // read from producer and write to the consumer
-                while ((read_bytes = read(fd1[READ], parent_buffer, no_bytes)) > 0)
+                while (1)
+                {
+                    int read_bytes = read(fd1[READ], parent_buffer, no_bytes);
+                    st.total_read_call += 1;
+
+                    if (read_bytes <= 0)
+                        break;
+                    
                     write(fd2[WRITE], parent_buffer, read_bytes);
+                    st.total_write_call += 1;
+                    st.total_char += read_bytes;
+                }                    
 
                 close(fd2[WRITE]);
                 close(fd1[READ]);
@@ -393,6 +483,21 @@ int main(int argc, char const *argv[])
 
                 dup2(STDIN_FILENO, parent_std_inn);
                 dup2(STDOUT_FILENO, parent_std_out);
+
+                if (debug_mode)
+                {
+                    struct timeval end_time;
+                    gettimeofday(&end_time, NULL);
+
+                    long time_interval_usec = 1000000 * (end_time.tv_sec - begin_time.tv_sec) + (end_time.tv_sec - begin_time.tv_sec);
+                    long time_interval_sec = time_interval_usec / 1000;
+
+                    printf(">   character-count     : %d\n", st.total_char);
+                    printf(">   read-call-count     : %d\n", st.total_read_call);
+                    printf(">   write-call-count    : %d\n", st.total_write_call);
+                    printf(">   total-time-passed-ms: %ldms\n", time_interval_sec);
+                    // printf(">   total-time-passed-ms: %d\n", (int) ((end_time - begin_time) / CLOCKS_PER_SEC));
+                }
             }
         }
         
