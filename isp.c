@@ -231,14 +231,12 @@ int main(int argc, char const *argv[])
                     struct timeval end_time;
                     gettimeofday(&end_time, NULL);
 
-                    long time_interval_usec = 1000000 * (end_time.tv_sec - begin_time.tv_sec) + (end_time.tv_sec - begin_time.tv_sec);
-                    long time_interval_sec = time_interval_usec / 1000;
+                    long time_interval_usec = 1000000 * (end_time.tv_sec - begin_time.tv_sec) + (end_time.tv_usec - begin_time.tv_usec);
 
-                    // printf(">   character-count  : %d\n", st.total_char);
-                    // printf(">   read-call-count  : %d\n", st.total_read_call);
-                    // printf(">   write-call-count : %d\n", st.total_write_call);
-                    printf(">   total-time-passed-ms: %ldms\n", time_interval_sec);
-                    // printf(">   total-time-passed-ms: %d\n", (int) ((end_time - begin_time) / CLOCKS_PER_SEC));
+                    // printf(">   character-count     : %d\n", st.total_char);
+                    // printf(">   read-call-count     : %d\n", st.total_read_call);
+                    // printf(">   write-call-count    : %d\n", st.total_write_call);
+                    printf(">   total-time-passed: %ld\n", time_interval_usec / 1000);
                 }
             }
         }
@@ -359,14 +357,12 @@ int main(int argc, char const *argv[])
                     struct timeval end_time;
                     gettimeofday(&end_time, NULL);
 
-                    long time_interval_usec = 1000000 * (end_time.tv_sec - begin_time.tv_sec) + (end_time.tv_sec - begin_time.tv_sec);
-                    long time_interval_sec = time_interval_usec / 1000;
+                    long time_interval_usec = 1000000 * (end_time.tv_sec - begin_time.tv_sec) + (end_time.tv_usec - begin_time.tv_usec);
 
-                    // printf(">   character-count  : %d\n", st.total_char);
-                    // printf(">   read-call-count  : %d\n", st.total_read_call);
-                    // printf(">   write-call-count : %d\n", st.total_write_call);
-                    printf(">   total-time-passed-ms: %ldms\n", time_interval_sec);
-                    // printf(">   total-time-passed-ms: %d\n", (int) ((end_time - begin_time) / CLOCKS_PER_SEC));
+                    // printf(">   character-count     : %d\n", st.total_char);
+                    // printf(">   read-call-count     : %d\n", st.total_read_call);
+                    // printf(">   write-call-count    : %d\n", st.total_write_call);
+                    printf(">   total-time-passed: %ld\n", time_interval_usec / 1000);
                 }
             }
         }
@@ -489,18 +485,16 @@ int main(int argc, char const *argv[])
                     struct timeval end_time;
                     gettimeofday(&end_time, NULL);
 
-                    long time_interval_usec = 1000000 * (end_time.tv_sec - begin_time.tv_sec) + (end_time.tv_sec - begin_time.tv_sec);
-                    long time_interval_sec = time_interval_usec / 1000;
+                    long time_interval_usec = 1000000 * (end_time.tv_sec - begin_time.tv_sec) + (end_time.tv_usec - begin_time.tv_usec);
 
-                    printf(">   character-count     : %d\n", st.total_char);
-                    printf(">   read-call-count     : %d\n", st.total_read_call);
-                    printf(">   write-call-count    : %d\n", st.total_write_call);
-                    printf(">   total-time-passed-ms: %ldms\n", time_interval_sec);
+                    printf(">   character-count  : %d\n", st.total_char);
+                    printf(">   read-call-count  : %d\n", st.total_read_call);
+                    printf(">   write-call-count : %d\n", st.total_write_call);
+                    printf(">   total-time-passed: %ld\n", time_interval_usec / 1000);
                     // printf(">   total-time-passed-ms: %d\n", (int) ((end_time - begin_time) / CLOCKS_PER_SEC));
                 }
             }
         }
-        
     }
     return 0;
 }
